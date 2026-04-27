@@ -123,6 +123,7 @@
   #stop-btn { display: none; border-color: var(--danger-border); color: var(--danger-text); background: var(--danger-bg); }
   #stop-btn.visible { display: block; }
   #clear-btn { color: var(--text2); font-size: 13px; height: 32px; padding: 0 11px; }
+  #save-btn  { color: var(--text2); font-size: 13px; height: 32px; padding: 0 11px; }
 
   #error-banner {
     padding: 8px 16px; background: var(--danger-bg); color: var(--danger-text);
@@ -188,6 +189,7 @@
         <div class="tip-line">Choose which AI model to chat with.</div>
       </div>
     </span>
+    <button id="save-btn" title="Save conversation as .txt">save</button>
     <button id="clear-btn">clear</button>
   </div>
 
@@ -463,6 +465,22 @@ sendBtn.onclick = send;
 $('clear-btn').onclick = () => {
   msgBox.innerHTML = '<div class="msg assistant"><div class="bubble">Chat and memory cleared.</div></div>';
   conversationHistory = [];
+};
+
+$('save-btn').onclick = () => {
+  if (!conversationHistory.length) { showError('Nothing to save yet.'); return; }
+  const model = modelSel.value || 'unknown-model';
+  const lines = conversationHistory.map(m => {
+    const who = m.role === 'user' ? 'You' : model;
+    return `[${who}]\n${m.content}`;
+  });
+  const content = lines.join('\n\n---\n\n');
+  const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+  const filename = `ollama-chat-${ts}.txt`;
+  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = filename;
+  a.click(); URL.revokeObjectURL(url);
 };
 
 promptIn.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
