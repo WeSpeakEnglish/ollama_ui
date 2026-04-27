@@ -39,15 +39,14 @@ A clean, lightweight, single-file web chat interface for Ollama with full conver
 | Setting | Description |
 |---|---|
 | `temp` | Controls creativity — `0.0` = safe/deterministic, `0.7` = default |
-| `window` | Context window size in tokens |
-| `context` | Quick preset selector |
+| `context window` | Context window size in tokens |
 | `stream` | Real-time response streaming (recommended ON) |
 | `system prompt` | Hidden instruction passed to the model |
 
 ## Tips
 
 - Pull models first: `ollama pull llama3:latest`
-- Increase **window** for longer conversations
+- Increase **context window** for longer conversations
 - Lower **temp** for coding or factual answers
 - Use **Clear** to reset chat and memory
 
