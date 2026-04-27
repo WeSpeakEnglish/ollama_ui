@@ -2,6 +2,9 @@
 
 A clean, lightweight, single-file web chat interface for Ollama with full conversation memory and context window control.
 
+
+![Ollama UI Screenshot](https://github.com/WeSpeakEnglish/images/blob/main/ollama_ui1.png)
+
 ## Features
 
 - Full conversation memory
