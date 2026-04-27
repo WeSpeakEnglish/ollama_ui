@@ -36,7 +36,6 @@
     overflow: hidden;
   }
 
-  /* topbar — popovers open BELOW */
   #topbar {
     display: flex; align-items: center; gap: 10px;
     padding: 10px 16px; border-bottom: 0.5px solid var(--border);
@@ -44,7 +43,6 @@
   }
   #topbar h1 { font-size: 15px; font-weight: 500; flex: 1; }
 
-  /* url row — popovers open BELOW */
   #url-row {
     display: flex; align-items: center; gap: 8px;
     padding: 8px 16px; border-bottom: 0.5px solid var(--border);
@@ -85,7 +83,6 @@
   }
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
 
-  /* params bar — popovers open ABOVE */
   #params-bar {
     display: flex; align-items: center; gap: 12px;
     padding: 8px 16px; border-top: 0.5px solid var(--border);
@@ -98,7 +95,9 @@
   .chk-label { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text2); cursor: pointer; }
   .chk-label input { accent-color: #378add; cursor: pointer; }
 
-  #sys-prompt-row { display: none; padding: 0 16px 10px; border-bottom: 0.5px solid var(--border); background: var(--bg2); }
+  #sys-prompt-row { 
+    display: none; padding: 0 16px 10px; border-bottom: 0.5px solid var(--border); background: var(--bg2); 
+  }
   #sys-prompt {
     width: 100%; padding: 8px 12px; font-size: 13px; border-radius: var(--radius-sm);
     resize: vertical; min-height: 60px; background: var(--bg); color: var(--text);
@@ -124,13 +123,13 @@
   #stop-btn { display: none; border-color: var(--danger-border); color: var(--danger-text); background: var(--danger-bg); }
   #stop-btn.visible { display: block; }
   #clear-btn { color: var(--text2); font-size: 13px; height: 32px; padding: 0 11px; }
+
   #error-banner {
     padding: 8px 16px; background: var(--danger-bg); color: var(--danger-text);
     font-size: 13px; border-top: 0.5px solid var(--danger-border); display: none; flex-shrink: 0;
   }
   #error-banner.visible { display: block; }
 
-  /* help button */
   .hbtn {
     display: inline-flex; align-items: center; justify-content: center;
     width: 17px; height: 17px; border-radius: 50%;
@@ -141,57 +140,22 @@
   }
   .hbtn:hover, .hbtn.active { background: var(--info-bg); color: var(--info-text); border-color: var(--info-text); }
 
-  /* tip anchor wrapper */
   .tip-anchor { position: relative; display: inline-flex; align-items: center; }
-
-  /* popover base */
   .tip-pop {
-    display: none;
-    position: absolute;
-    left: 50%; transform: translateX(-50%);
-    width: 260px;
-    background: var(--bg);
-    border: 0.5px solid var(--border2);
-    border-radius: var(--radius);
-    padding: 12px 14px;
-    font-size: 13px; line-height: 1.6;
-    color: var(--text);
-    box-shadow: 0 4px 20px rgba(0,0,0,0.14);
-    z-index: 50;
+    display: none; position: absolute; left: 50%; transform: translateX(-50%);
+    width: 260px; background: var(--bg); border: 0.5px solid var(--border2);
+    border-radius: var(--radius); padding: 12px 14px; font-size: 13px; line-height: 1.6;
+    color: var(--text); box-shadow: 0 4px 20px rgba(0,0,0,0.14); z-index: 50;
   }
   .tip-pop.open { display: block; }
-
-  /* arrow shared */
   .tip-pop::before {
-    content: '';
-    position: absolute;
-    left: 50%; transform: translateX(-50%);
-    border-left: 5px solid transparent;
-    border-right: 5px solid transparent;
+    content: ''; position: absolute; left: 50%; transform: translateX(-50%);
+    border-left: 5px solid transparent; border-right: 5px solid transparent;
   }
-
-  /* ABOVE button (default — for params bar) */
-  .tip-pop.above {
-    bottom: calc(100% + 8px);
-    top: auto;
-  }
-  .tip-pop.above::before {
-    bottom: -5px; top: auto;
-    border-top: 5px solid var(--border2);
-    border-bottom: none;
-  }
-
-  /* BELOW button (for topbar and url row) */
-  .tip-pop.below {
-    top: calc(100% + 8px);
-    bottom: auto;
-  }
-  .tip-pop.below::before {
-    top: -5px; bottom: auto;
-    border-bottom: 5px solid var(--border2);
-    border-top: none;
-  }
-
+  .tip-pop.above { bottom: calc(100% + 8px); }
+  .tip-pop.above::before { bottom: -5px; border-top: 5px solid var(--border2); border-bottom: none; }
+  .tip-pop.below { top: calc(100% + 8px); }
+  .tip-pop.below::before { top: -5px; border-bottom: 5px solid var(--border2); border-top: none; }
   .tip-title { font-weight: 500; font-size: 13px; margin-bottom: 7px; color: var(--text); }
   .tip-line { color: var(--text2); margin-bottom: 2px; }
   .tip-line b { color: var(--text); font-weight: 500; }
@@ -201,7 +165,7 @@
 <body>
 <div id="app">
 
-  <!-- TOPBAR: help opens BELOW -->
+  <!-- TOPBAR -->
   <div id="topbar">
     <div id="status-dot"></div>
     <span id="status-label">checking…</span>
@@ -211,18 +175,13 @@
       <button class="hbtn" onclick="toggleTip(this)">?</button>
       <div class="tip-pop below">
         <div class="tip-title">Model selector</div>
-        <div class="tip-line">Choose which AI model to chat with. Loaded from your Ollama server.</div>
-        <div class="tip-gap"></div>
-        <div class="tip-line"><b>Smaller (7B–8B)</b> — faster, less RAM</div>
-        <div class="tip-line"><b>Larger (70B+)</b> — smarter but slower</div>
-        <div class="tip-gap"></div>
-        <div class="tip-line">Add models on the server: <b>ollama pull llama3</b></div>
+        <div class="tip-line">Choose which AI model to chat with.</div>
       </div>
     </span>
     <button id="clear-btn">clear</button>
   </div>
 
-  <!-- URL ROW: help opens BELOW -->
+  <!-- URL ROW -->
   <div id="url-row">
     <label>Ollama URL</label>
     <input type="text" id="base-url-input" value="http://127.0.0.1:11434">
@@ -231,10 +190,6 @@
       <div class="tip-pop below">
         <div class="tip-title">Ollama server URL</div>
         <div class="tip-line">The address where Ollama is listening.</div>
-        <div class="tip-gap"></div>
-        <div class="tip-line">With SSH tunnel the default is <b>http://127.0.0.1:11434</b></div>
-        <div class="tip-gap"></div>
-        <div class="tip-line">Change only if you forwarded a different port, then click <b>connect</b>.</div>
       </div>
     </span>
     <button id="reconnect-btn">connect</button>
@@ -242,13 +197,13 @@
 
   <div id="messages">
     <div class="msg assistant">
-      <div class="bubble">Hello! Make sure your SSH tunnel is running, then click <strong>connect</strong>. Click any <strong>?</strong> to learn what each setting does.</div>
+      <div class="bubble">Hello! Memory and context window controls are now available. Click any <strong>?</strong> for help.</div>
     </div>
   </div>
 
   <div id="error-banner"></div>
 
-  <!-- PARAMS BAR: help opens ABOVE -->
+  <!-- PARAMS BAR - with new Window control -->
   <div id="params-bar">
     <div class="param">
       <label>temp</label>
@@ -258,18 +213,30 @@
         <button class="hbtn" onclick="toggleTip(this)">?</button>
         <div class="tip-pop above">
           <div class="tip-title">Temperature</div>
-          <div class="tip-line">Controls how random or creative the model is.</div>
-          <div class="tip-gap"></div>
-          <div class="tip-line"><b>0.0</b> — always picks the safest word</div>
-          <div class="tip-line"><b>0.7</b> — balanced default</div>
-          <div class="tip-line"><b>1.0+</b> — more varied and creative</div>
-          <div class="tip-line"><b>2.0</b> — very random, may be incoherent</div>
-          <div class="tip-gap"></div>
-          <div class="tip-line">Low for code/facts · High for creative writing</div>
+          <div class="tip-line">Controls randomness of the output.</div>
         </div>
       </span>
     </div>
     <div class="param-divider"></div>
+
+    <div class="param">
+      <label>window</label>
+      <input type="range" id="window-range" min="1024" max="32768" step="1024" value="4096">
+      <span class="val" id="window-val">4k</span>
+      <span class="tip-anchor">
+        <button class="hbtn" onclick="toggleTip(this)">?</button>
+        <div class="tip-pop above">
+          <div class="tip-title">Context Window</div>
+          <div class="tip-line">Maximum tokens the model can remember (your messages + response).</div>
+          <div class="tip-gap"></div>
+          <div class="tip-line"><b>4k</b> — default, good for most chats</div>
+          <div class="tip-line"><b>8k–16k</b> — longer conversations</div>
+          <div class="tip-line"><b>32k</b> — very long context (uses more RAM)</div>
+        </div>
+      </span>
+    </div>
+    <div class="param-divider"></div>
+
     <div class="param">
       <label>context</label>
       <select id="ctx-select">
@@ -282,50 +249,35 @@
       <span class="tip-anchor">
         <button class="hbtn" onclick="toggleTip(this)">?</button>
         <div class="tip-pop above">
-          <div class="tip-title">Context window</div>
-          <div class="tip-line">How much text the model holds in memory — your messages + its replies combined.</div>
-          <div class="tip-gap"></div>
-          <div class="tip-line"><b>2 k</b> — fast, short chats</div>
-          <div class="tip-line"><b>4 k</b> — default, good for most tasks</div>
-          <div class="tip-line"><b>8 k–32 k</b> — long docs or long conversations</div>
-          <div class="tip-gap"></div>
-          <div class="tip-line">Larger values use more RAM on the server.</div>
+          <div class="tip-title">Context Reference</div>
+          <div class="tip-line">Quick preset for context window size.</div>
         </div>
       </span>
     </div>
     <div class="param-divider"></div>
+
     <label class="chk-label"><input type="checkbox" id="stream-chk" checked> stream</label>
     <span class="tip-anchor">
       <button class="hbtn" onclick="toggleTip(this)">?</button>
       <div class="tip-pop above">
         <div class="tip-title">Streaming</div>
-        <div class="tip-line"><b>ON</b> — words appear token by token as the model generates. You see the response immediately.</div>
-        <div class="tip-gap"></div>
-        <div class="tip-line"><b>OFF</b> — model finishes first, then shows the full reply at once.</div>
-        <div class="tip-gap"></div>
-        <div class="tip-line">Recommended ON for long responses.</div>
+        <div class="tip-line">Show response token by token.</div>
       </div>
     </span>
     <div class="param-divider"></div>
+
     <label class="chk-label"><input type="checkbox" id="sys-prompt-toggle"> system prompt</label>
     <span class="tip-anchor">
       <button class="hbtn" onclick="toggleTip(this)">?</button>
       <div class="tip-pop above">
         <div class="tip-title">System prompt</div>
-        <div class="tip-line">A hidden instruction given to the model before the conversation. Sets its role, tone, or rules.</div>
-        <div class="tip-gap"></div>
-        <div class="tip-line"><b>Examples:</b></div>
-        <div class="tip-line">· "You are a Linux expert. Be concise."</div>
-        <div class="tip-line">· "Always reply in Czech."</div>
-        <div class="tip-line">· "You are a sarcastic assistant."</div>
-        <div class="tip-gap"></div>
-        <div class="tip-line">The user never sees this instruction.</div>
+        <div class="tip-line">Hidden instruction for the model.</div>
       </div>
     </span>
   </div>
 
   <div id="sys-prompt-row">
-    <textarea id="sys-prompt" rows="2" placeholder='e.g. "You are a Linux expert. Answer concisely and always show commands."'></textarea>
+    <textarea id="sys-prompt" rows="2" placeholder='e.g. "You are a helpful assistant. Be concise."'></textarea>
   </div>
 
   <div id="inputbar">
@@ -337,6 +289,7 @@
 </div>
 
 <script>
+// Toggle help popovers
 function toggleTip(btn) {
   const pop = btn.nextElementSibling;
   const isOpen = pop.classList.contains('open');
@@ -351,17 +304,31 @@ document.addEventListener('click', e => { if (!e.target.closest('.tip-anchor')) 
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAll(); });
 
 let BASE = 'http://127.0.0.1:11434', abortCtrl = null;
+let conversationHistory = [];
+
 const $ = id => document.getElementById(id);
 const modelSel = $('model-select'), msgBox = $('messages'), promptIn = $('prompt-input');
 const sendBtn = $('send-btn'), stopBtn = $('stop-btn');
 const statusDot = $('status-dot'), statusLbl = $('status-label');
 const errBanner = $('error-banner'), tempRange = $('temp-range'), tempVal = $('temp-val');
+const windowRange = $('window-range'), windowVal = $('window-val');
 
 $('sys-prompt-toggle').onchange = function() { $('sys-prompt-row').style.display = this.checked ? 'block' : 'none'; };
+
 tempRange.oninput = () => { tempVal.textContent = (+tempRange.value).toFixed(1); };
 
+// New: Window slider
+windowRange.oninput = () => {
+  const val = +windowRange.value;
+  windowVal.textContent = val >= 1024 ? (val/1024).toFixed(0) + 'k' : val;
+};
+
 function setStatus(ok) { statusDot.className = ok ? 'online' : 'offline'; statusLbl.textContent = ok ? 'connected' : 'offline'; }
-function showError(msg, dur) { errBanner.textContent = msg; errBanner.classList.add('visible'); if (dur !== 0) setTimeout(() => errBanner.classList.remove('visible'), dur || 6000); }
+function showError(msg, dur) { 
+  errBanner.textContent = msg; 
+  errBanner.classList.add('visible'); 
+  if (dur !== 0) setTimeout(() => errBanner.classList.remove('visible'), dur || 6000); 
+}
 
 async function loadModels() {
   BASE = $('base-url-input').value.replace(/\/$/, '');
@@ -370,7 +337,7 @@ async function loadModels() {
     const r = await fetch(BASE + '/api/tags');
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const d = await r.json();
-    setStatus(true); errBanner.classList.remove('visible');
+    setStatus(true);
     const models = (d.models || []).sort((a, b) => a.name.localeCompare(b.name));
     if (!models.length) { modelSel.innerHTML = '<option value="">no models found</option>'; showError('No models installed. Run: ollama pull llama3'); return; }
     modelSel.innerHTML = models.map(m => `<option value="${m.name}">${m.name}</option>`).join('');
@@ -386,6 +353,7 @@ function addMsg(role, text) {
   const b = document.createElement('div'); b.className = 'bubble'; b.textContent = text;
   w.appendChild(b); msgBox.appendChild(w); msgBox.scrollTop = msgBox.scrollHeight; return b;
 }
+
 function addStreamBubble() {
   const w = document.createElement('div'); w.className = 'msg assistant';
   const b = document.createElement('div'); b.className = 'bubble';
@@ -393,43 +361,79 @@ function addStreamBubble() {
   b.appendChild(c); w.appendChild(b); msgBox.appendChild(w); msgBox.scrollTop = msgBox.scrollHeight;
   return { bubble: b, cursor: c };
 }
+
 function setGenerating(on) { sendBtn.disabled = on; promptIn.disabled = on; stopBtn.classList.toggle('visible', on); }
 
 async function send() {
   const model = modelSel.value;
   if (!model || model.startsWith('—')) { showError('Select a model first.'); return; }
   const text = promptIn.value.trim(); if (!text) return;
+
   errBanner.classList.remove('visible');
   promptIn.value = ''; promptIn.style.height = 'auto';
-  addMsg('user', text); setGenerating(true);
+
+  addMsg('user', text);
+  conversationHistory.push({ role: 'user', content: text });
+
+  setGenerating(true);
   const streaming = $('stream-chk').checked;
   const sysText = $('sys-prompt-toggle').checked ? $('sys-prompt').value.trim() : '';
-  const body = { model, prompt: text, stream: streaming, options: { temperature: +tempRange.value, num_ctx: +$('ctx-select').value } };
+
+  const body = {
+    model,
+    messages: conversationHistory.map(m => ({ role: m.role, content: m.content })),
+    stream: streaming,
+    options: { 
+      temperature: +tempRange.value, 
+      num_ctx: +windowRange.value   // ← Use the new window control
+    }
+  };
   if (sysText) body.system = sysText;
+
   abortCtrl = new AbortController();
+
   try {
-    const r = await fetch(BASE + '/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: abortCtrl.signal });
-    if (!r.ok) { const e = await r.text(); throw new Error('HTTP ' + r.status + ': ' + e.slice(0, 120)); }
+    const r = await fetch(BASE + '/api/chat', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body), signal: abortCtrl.signal
+    });
+
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+
     if (streaming) {
       const { bubble, cursor } = addStreamBubble();
-      const reader = r.body.getReader(); const dec = new TextDecoder(); let full = '';
-      outer: while (true) {
-        const { done, value } = await reader.read(); if (done) break;
+      const reader = r.body.getReader();
+      const dec = new TextDecoder();
+      let full = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
         for (const line of dec.decode(value, { stream: true }).split('\n')) {
           if (!line.trim()) continue;
           try {
             const j = JSON.parse(line);
-            if (j.response) { full += j.response; bubble.textContent = full; bubble.appendChild(cursor); msgBox.scrollTop = msgBox.scrollHeight; }
-            if (j.done) { cursor.remove(); break outer; }
+            if (j.message?.content) {
+              full += j.message.content;
+              bubble.textContent = full;
+              bubble.appendChild(cursor);
+              msgBox.scrollTop = msgBox.scrollHeight;
+            }
+            if (j.done) {
+              cursor.remove();
+              conversationHistory.push({ role: 'assistant', content: full });
+              break;
+            }
           } catch {}
         }
       }
-      if (cursor.parentNode) cursor.remove();
     } else {
       const { bubble, cursor } = addStreamBubble();
       bubble.textContent = 'thinking…'; bubble.appendChild(cursor);
-      const d = await r.json(); cursor.remove();
-      bubble.textContent = d.response || '(empty response)'; msgBox.scrollTop = msgBox.scrollHeight;
+      const d = await r.json();
+      cursor.remove();
+      const resp = d.message?.content || '(empty)';
+      bubble.textContent = resp;
+      conversationHistory.push({ role: 'assistant', content: resp });
     }
   } catch(e) {
     if (e.name === 'AbortError') addMsg('assistant', '(stopped)');
@@ -440,9 +444,16 @@ async function send() {
 
 stopBtn.onclick = () => { if (abortCtrl) abortCtrl.abort(); };
 sendBtn.onclick = send;
-$('clear-btn').onclick = () => { msgBox.innerHTML = '<div class="msg assistant"><div class="bubble">Chat cleared.</div></div>'; };
+$('clear-btn').onclick = () => {
+  msgBox.innerHTML = '<div class="msg assistant"><div class="bubble">Chat and memory cleared.</div></div>';
+  conversationHistory = [];
+};
+
 promptIn.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
-promptIn.addEventListener('input', () => { promptIn.style.height = 'auto'; promptIn.style.height = Math.min(promptIn.scrollHeight, 130) + 'px'; });
+promptIn.addEventListener('input', () => { 
+  promptIn.style.height = 'auto'; 
+  promptIn.style.height = Math.min(promptIn.scrollHeight, 130) + 'px'; 
+});
 
 loadModels();
 </script>
