@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ollama UI</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #ffffff; --bg2: #f5f5f4; --bg3: #eeede8;
+    --text: #1a1a1a; --text2: #666660; --text3: #999993;
+    --border: rgba(0,0,0,0.12); --border2: rgba(0,0,0,0.22);
+    --info-bg: #e6f1fb; --info-text: #0c447c;
+    --danger-bg: #fcebeb; --danger-text: #a32d2d; --danger-border: rgba(163,45,45,0.3);
+    --radius: 10px; --radius-sm: 7px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1a; --bg2: #252523; --bg3: #2e2e2b;
+      --text: #f0efeb; --text2: #a0a099; --text3: #666660;
+      --border: rgba(255,255,255,0.1); --border2: rgba(255,255,255,0.2);
+      --info-bg: #042c53; --info-text: #b5d4f4;
+      --danger-bg: #501313; --danger-text: #f7c1c1; --danger-border: rgba(247,193,193,0.25);
+    }
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg3); color: var(--text);
+    height: 100dvh; display: flex; flex-direction: column; font-size: 15px;
+  }
+  #app {
+    display: flex; flex-direction: column; flex: 1;
+    max-width: 860px; width: 100%; margin: 0 auto;
+    background: var(--bg);
+    border-left: 0.5px solid var(--border); border-right: 0.5px solid var(--border);
+    overflow: hidden;
+  }
+
+  /* topbar — popovers open BELOW */
+  #topbar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 16px; border-bottom: 0.5px solid var(--border);
+    background: var(--bg2); flex-shrink: 0; position: relative; z-index: 20;
+  }
+  #topbar h1 { font-size: 15px; font-weight: 500; flex: 1; }
+
+  /* url row — popovers open BELOW */
+  #url-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 16px; border-bottom: 0.5px solid var(--border);
+    background: var(--bg2); flex-shrink: 0; position: relative; z-index: 19;
+  }
+  #url-row label { font-size: 12px; color: var(--text2); white-space: nowrap; }
+  #base-url-input { flex: 1; padding: 5px 9px; font-size: 13px; }
+  #reconnect-btn { height: 30px; padding: 0 12px; font-size: 12px; }
+
+  #status-dot { width: 8px; height: 8px; border-radius: 50%; background: #ccc; flex-shrink: 0; }
+  #status-dot.online { background: #63c05a; }
+  #status-dot.offline { background: #e24b4a; }
+  #status-label { font-size: 12px; color: var(--text2); }
+
+  select, input[type=text], textarea {
+    background: var(--bg); color: var(--text);
+    border: 0.5px solid var(--border2); border-radius: var(--radius-sm);
+    font-family: inherit; font-size: 13px;
+  }
+  select { padding: 5px 8px; cursor: pointer; }
+
+  #messages {
+    flex: 1; overflow-y: auto; padding: 16px;
+    display: flex; flex-direction: column; gap: 14px; scroll-behavior: smooth;
+  }
+  .msg { display: flex; flex-direction: column; max-width: 84%; gap: 3px; }
+  .msg.user { align-self: flex-end; align-items: flex-end; }
+  .msg.assistant { align-self: flex-start; align-items: flex-start; }
+  .bubble {
+    padding: 10px 14px; border-radius: var(--radius);
+    font-size: 14px; line-height: 1.65; white-space: pre-wrap; word-break: break-word;
+  }
+  .msg.user .bubble { background: var(--info-bg); color: var(--text); border-bottom-right-radius: 3px; }
+  .msg.assistant .bubble { background: var(--bg2); border: 0.5px solid var(--border); border-bottom-left-radius: 3px; }
+  .cursor {
+    display: inline-block; width: 2px; height: 1em; background: var(--text);
+    animation: blink 0.75s infinite; vertical-align: text-bottom; margin-left: 2px;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+  /* params bar — popovers open ABOVE */
+  #params-bar {
+    display: flex; align-items: center; gap: 12px;
+    padding: 8px 16px; border-top: 0.5px solid var(--border);
+    background: var(--bg2); flex-wrap: wrap; flex-shrink: 0; position: relative; z-index: 20;
+  }
+  .param { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text2); }
+  .param input[type=range] { width: 90px; accent-color: #378add; cursor: pointer; }
+  .param .val { min-width: 30px; font-weight: 500; color: var(--text); }
+  .param-divider { width: 0.5px; height: 18px; background: var(--border2); }
+  .chk-label { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text2); cursor: pointer; }
+  .chk-label input { accent-color: #378add; cursor: pointer; }
+
+  #sys-prompt-row { display: none; padding: 0 16px 10px; border-bottom: 0.5px solid var(--border); background: var(--bg2); }
+  #sys-prompt {
+    width: 100%; padding: 8px 12px; font-size: 13px; border-radius: var(--radius-sm);
+    resize: vertical; min-height: 60px; background: var(--bg); color: var(--text);
+    border: 0.5px solid var(--border2); font-family: inherit; line-height: 1.5;
+  }
+
+  #inputbar {
+    padding: 10px 16px; border-top: 0.5px solid var(--border);
+    display: flex; gap: 8px; align-items: flex-end; flex-shrink: 0;
+  }
+  #prompt-input {
+    flex: 1; min-height: 40px; max-height: 130px; padding: 9px 13px;
+    font-size: 14px; border-radius: var(--radius); resize: none; line-height: 1.5;
+  }
+  button {
+    height: 40px; padding: 0 16px; font-size: 14px; font-family: inherit;
+    border-radius: var(--radius-sm); border: 0.5px solid var(--border2);
+    background: var(--bg); color: var(--text); cursor: pointer;
+    white-space: nowrap; transition: background 0.1s; flex-shrink: 0;
+  }
+  button:hover { background: var(--bg2); }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  #stop-btn { display: none; border-color: var(--danger-border); color: var(--danger-text); background: var(--danger-bg); }
+  #stop-btn.visible { display: block; }
+  #clear-btn { color: var(--text2); font-size: 13px; height: 32px; padding: 0 11px; }
+  #error-banner {
+    padding: 8px 16px; background: var(--danger-bg); color: var(--danger-text);
+    font-size: 13px; border-top: 0.5px solid var(--danger-border); display: none; flex-shrink: 0;
+  }
+  #error-banner.visible { display: block; }
+
+  /* help button */
+  .hbtn {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 17px; height: 17px; border-radius: 50%;
+    background: transparent; border: 0.5px solid var(--border2);
+    color: var(--text3); font-size: 10px; font-weight: 600;
+    cursor: pointer; flex-shrink: 0; padding: 0; font-family: inherit;
+    transition: border-color 0.12s, color 0.12s, background 0.12s;
+  }
+  .hbtn:hover, .hbtn.active { background: var(--info-bg); color: var(--info-text); border-color: var(--info-text); }
+
+  /* tip anchor wrapper */
+  .tip-anchor { position: relative; display: inline-flex; align-items: center; }
+
+  /* popover base */
+  .tip-pop {
+    display: none;
+    position: absolute;
+    left: 50%; transform: translateX(-50%);
+    width: 260px;
+    background: var(--bg);
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    font-size: 13px; line-height: 1.6;
+    color: var(--text);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.14);
+    z-index: 50;
+  }
+  .tip-pop.open { display: block; }
+
+  /* arrow shared */
+  .tip-pop::before {
+    content: '';
+    position: absolute;
+    left: 50%; transform: translateX(-50%);
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+  }
+
+  /* ABOVE button (default — for params bar) */
+  .tip-pop.above {
+    bottom: calc(100% + 8px);
+    top: auto;
+  }
+  .tip-pop.above::before {
+    bottom: -5px; top: auto;
+    border-top: 5px solid var(--border2);
+    border-bottom: none;
+  }
+
+  /* BELOW button (for topbar and url row) */
+  .tip-pop.below {
+    top: calc(100% + 8px);
+    bottom: auto;
+  }
+  .tip-pop.below::before {
+    top: -5px; bottom: auto;
+    border-bottom: 5px solid var(--border2);
+    border-top: none;
+  }
+
+  .tip-title { font-weight: 500; font-size: 13px; margin-bottom: 7px; color: var(--text); }
+  .tip-line { color: var(--text2); margin-bottom: 2px; }
+  .tip-line b { color: var(--text); font-weight: 500; }
+  .tip-gap { height: 6px; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- TOPBAR: help opens BELOW -->
+  <div id="topbar">
+    <div id="status-dot"></div>
+    <span id="status-label">checking…</span>
+    <h1>Ollama chat</h1>
+    <select id="model-select"><option value="">loading…</option></select>
+    <span class="tip-anchor">
+      <button class="hbtn" onclick="toggleTip(this)">?</button>
+      <div class="tip-pop below">
+        <div class="tip-title">Model selector</div>
+        <div class="tip-line">Choose which AI model to chat with. Loaded from your Ollama server.</div>
+        <div class="tip-gap"></div>
+        <div class="tip-line"><b>Smaller (7B–8B)</b> — faster, less RAM</div>
+        <div class="tip-line"><b>Larger (70B+)</b> — smarter but slower</div>
+        <div class="tip-gap"></div>
+        <div class="tip-line">Add models on the server: <b>ollama pull llama3</b></div>
+      </div>
+    </span>
+    <button id="clear-btn">clear</button>
+  </div>
+
+  <!-- URL ROW: help opens BELOW -->
+  <div id="url-row">
+    <label>Ollama URL</label>
+    <input type="text" id="base-url-input" value="http://127.0.0.1:11434">
+    <span class="tip-anchor">
+      <button class="hbtn" onclick="toggleTip(this)">?</button>
+      <div class="tip-pop below">
+        <div class="tip-title">Ollama server URL</div>
+        <div class="tip-line">The address where Ollama is listening.</div>
+        <div class="tip-gap"></div>
+        <div class="tip-line">With SSH tunnel the default is <b>http://127.0.0.1:11434</b></div>
+        <div class="tip-gap"></div>
+        <div class="tip-line">Change only if you forwarded a different port, then click <b>connect</b>.</div>
+      </div>
+    </span>
+    <button id="reconnect-btn">connect</button>
+  </div>
+
+  <div id="messages">
+    <div class="msg assistant">
+      <div class="bubble">Hello! Make sure your SSH tunnel is running, then click <strong>connect</strong>. Click any <strong>?</strong> to learn what each setting does.</div>
+    </div>
+  </div>
+
+  <div id="error-banner"></div>
+
+  <!-- PARAMS BAR: help opens ABOVE -->
+  <div id="params-bar">
+    <div class="param">
+      <label>temp</label>
+      <input type="range" id="temp-range" min="0" max="2" step="0.1" value="0.7">
+      <span class="val" id="temp-val">0.7</span>
+      <span class="tip-anchor">
+        <button class="hbtn" onclick="toggleTip(this)">?</button>
+        <div class="tip-pop above">
+          <div class="tip-title">Temperature</div>
+          <div class="tip-line">Controls how random or creative the model is.</div>
+          <div class="tip-gap"></div>
+          <div class="tip-line"><b>0.0</b> — always picks the safest word</div>
+          <div class="tip-line"><b>0.7</b> — balanced default</div>
+          <div class="tip-line"><b>1.0+</b> — more varied and creative</div>
+          <div class="tip-line"><b>2.0</b> — very random, may be incoherent</div>
+          <div class="tip-gap"></div>
+          <div class="tip-line">Low for code/facts · High for creative writing</div>
+        </div>
+      </span>
+    </div>
+    <div class="param-divider"></div>
+    <div class="param">
+      <label>context</label>
+      <select id="ctx-select">
+        <option value="2048">2 k</option>
+        <option value="4096" selected>4 k</option>
+        <option value="8192">8 k</option>
+        <option value="16384">16 k</option>
+        <option value="32768">32 k</option>
+      </select>
+      <span class="tip-anchor">
+        <button class="hbtn" onclick="toggleTip(this)">?</button>
+        <div class="tip-pop above">
+          <div class="tip-title">Context window</div>
+          <div class="tip-line">How much text the model holds in memory — your messages + its replies combined.</div>
+          <div class="tip-gap"></div>
+          <div class="tip-line"><b>2 k</b> — fast, short chats</div>
+          <div class="tip-line"><b>4 k</b> — default, good for most tasks</div>
+          <div class="tip-line"><b>8 k–32 k</b> — long docs or long conversations</div>
+          <div class="tip-gap"></div>
+          <div class="tip-line">Larger values use more RAM on the server.</div>
+        </div>
+      </span>
+    </div>
+    <div class="param-divider"></div>
+    <label class="chk-label"><input type="checkbox" id="stream-chk" checked> stream</label>
+    <span class="tip-anchor">
+      <button class="hbtn" onclick="toggleTip(this)">?</button>
+      <div class="tip-pop above">
+        <div class="tip-title">Streaming</div>
+        <div class="tip-line"><b>ON</b> — words appear token by token as the model generates. You see the response immediately.</div>
+        <div class="tip-gap"></div>
+        <div class="tip-line"><b>OFF</b> — model finishes first, then shows the full reply at once.</div>
+        <div class="tip-gap"></div>
+        <div class="tip-line">Recommended ON for long responses.</div>
+      </div>
+    </span>
+    <div class="param-divider"></div>
+    <label class="chk-label"><input type="checkbox" id="sys-prompt-toggle"> system prompt</label>
+    <span class="tip-anchor">
+      <button class="hbtn" onclick="toggleTip(this)">?</button>
+      <div class="tip-pop above">
+        <div class="tip-title">System prompt</div>
+        <div class="tip-line">A hidden instruction given to the model before the conversation. Sets its role, tone, or rules.</div>
+        <div class="tip-gap"></div>
+        <div class="tip-line"><b>Examples:</b></div>
+        <div class="tip-line">· "You are a Linux expert. Be concise."</div>
+        <div class="tip-line">· "Always reply in Czech."</div>
+        <div class="tip-line">· "You are a sarcastic assistant."</div>
+        <div class="tip-gap"></div>
+        <div class="tip-line">The user never sees this instruction.</div>
+      </div>
+    </span>
+  </div>
+
+  <div id="sys-prompt-row">
+    <textarea id="sys-prompt" rows="2" placeholder='e.g. "You are a Linux expert. Answer concisely and always show commands."'></textarea>
+  </div>
+
+  <div id="inputbar">
+    <textarea id="prompt-input" placeholder="Type your message… (Enter to send, Shift+Enter for newline)" rows="1"></textarea>
+    <button id="stop-btn">stop</button>
+    <button id="send-btn">send</button>
+  </div>
+
+</div>
+
+<script>
+function toggleTip(btn) {
+  const pop = btn.nextElementSibling;
+  const isOpen = pop.classList.contains('open');
+  closeAll();
+  if (!isOpen) { pop.classList.add('open'); btn.classList.add('active'); }
+}
+function closeAll() {
+  document.querySelectorAll('.tip-pop.open').forEach(p => p.classList.remove('open'));
+  document.querySelectorAll('.hbtn.active').forEach(b => b.classList.remove('active'));
+}
+document.addEventListener('click', e => { if (!e.target.closest('.tip-anchor')) closeAll(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAll(); });
+
+let BASE = 'http://127.0.0.1:11434', abortCtrl = null;
+const $ = id => document.getElementById(id);
+const modelSel = $('model-select'), msgBox = $('messages'), promptIn = $('prompt-input');
+const sendBtn = $('send-btn'), stopBtn = $('stop-btn');
+const statusDot = $('status-dot'), statusLbl = $('status-label');
+const errBanner = $('error-banner'), tempRange = $('temp-range'), tempVal = $('temp-val');
+
+$('sys-prompt-toggle').onchange = function() { $('sys-prompt-row').style.display = this.checked ? 'block' : 'none'; };
+tempRange.oninput = () => { tempVal.textContent = (+tempRange.value).toFixed(1); };
+
+function setStatus(ok) { statusDot.className = ok ? 'online' : 'offline'; statusLbl.textContent = ok ? 'connected' : 'offline'; }
+function showError(msg, dur) { errBanner.textContent = msg; errBanner.classList.add('visible'); if (dur !== 0) setTimeout(() => errBanner.classList.remove('visible'), dur || 6000); }
+
+async function loadModels() {
+  BASE = $('base-url-input').value.replace(/\/$/, '');
+  statusLbl.textContent = 'connecting…'; statusDot.className = '';
+  try {
+    const r = await fetch(BASE + '/api/tags');
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json();
+    setStatus(true); errBanner.classList.remove('visible');
+    const models = (d.models || []).sort((a, b) => a.name.localeCompare(b.name));
+    if (!models.length) { modelSel.innerHTML = '<option value="">no models found</option>'; showError('No models installed. Run: ollama pull llama3'); return; }
+    modelSel.innerHTML = models.map(m => `<option value="${m.name}">${m.name}</option>`).join('');
+  } catch {
+    setStatus(false); modelSel.innerHTML = '<option value="">— select model —</option>';
+    showError('Cannot reach Ollama at ' + BASE + '. Is your SSH tunnel running?', 0);
+  }
+}
+$('reconnect-btn').onclick = loadModels;
+
+function addMsg(role, text) {
+  const w = document.createElement('div'); w.className = 'msg ' + role;
+  const b = document.createElement('div'); b.className = 'bubble'; b.textContent = text;
+  w.appendChild(b); msgBox.appendChild(w); msgBox.scrollTop = msgBox.scrollHeight; return b;
+}
+function addStreamBubble() {
+  const w = document.createElement('div'); w.className = 'msg assistant';
+  const b = document.createElement('div'); b.className = 'bubble';
+  const c = document.createElement('span'); c.className = 'cursor';
+  b.appendChild(c); w.appendChild(b); msgBox.appendChild(w); msgBox.scrollTop = msgBox.scrollHeight;
+  return { bubble: b, cursor: c };
+}
+function setGenerating(on) { sendBtn.disabled = on; promptIn.disabled = on; stopBtn.classList.toggle('visible', on); }
+
+async function send() {
+  const model = modelSel.value;
+  if (!model || model.startsWith('—')) { showError('Select a model first.'); return; }
+  const text = promptIn.value.trim(); if (!text) return;
+  errBanner.classList.remove('visible');
+  promptIn.value = ''; promptIn.style.height = 'auto';
+  addMsg('user', text); setGenerating(true);
+  const streaming = $('stream-chk').checked;
+  const sysText = $('sys-prompt-toggle').checked ? $('sys-prompt').value.trim() : '';
+  const body = { model, prompt: text, stream: streaming, options: { temperature: +tempRange.value, num_ctx: +$('ctx-select').value } };
+  if (sysText) body.system = sysText;
+  abortCtrl = new AbortController();
+  try {
+    const r = await fetch(BASE + '/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: abortCtrl.signal });
+    if (!r.ok) { const e = await r.text(); throw new Error('HTTP ' + r.status + ': ' + e.slice(0, 120)); }
+    if (streaming) {
+      const { bubble, cursor } = addStreamBubble();
+      const reader = r.body.getReader(); const dec = new TextDecoder(); let full = '';
+      outer: while (true) {
+        const { done, value } = await reader.read(); if (done) break;
+        for (const line of dec.decode(value, { stream: true }).split('\n')) {
+          if (!line.trim()) continue;
+          try {
+            const j = JSON.parse(line);
+            if (j.response) { full += j.response; bubble.textContent = full; bubble.appendChild(cursor); msgBox.scrollTop = msgBox.scrollHeight; }
+            if (j.done) { cursor.remove(); break outer; }
+          } catch {}
+        }
+      }
+      if (cursor.parentNode) cursor.remove();
+    } else {
+      const { bubble, cursor } = addStreamBubble();
+      bubble.textContent = 'thinking…'; bubble.appendChild(cursor);
+      const d = await r.json(); cursor.remove();
+      bubble.textContent = d.response || '(empty response)'; msgBox.scrollTop = msgBox.scrollHeight;
+    }
+  } catch(e) {
+    if (e.name === 'AbortError') addMsg('assistant', '(stopped)');
+    else showError('Error: ' + e.message, 0);
+  }
+  setGenerating(false); abortCtrl = null;
+}
+
+stopBtn.onclick = () => { if (abortCtrl) abortCtrl.abort(); };
+sendBtn.onclick = send;
+$('clear-btn').onclick = () => { msgBox.innerHTML = '<div class="msg assistant"><div class="bubble">Chat cleared.</div></div>'; };
+promptIn.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
+promptIn.addEventListener('input', () => { promptIn.style.height = 'auto'; promptIn.style.height = Math.min(promptIn.scrollHeight, 130) + 'px'; });
+
+loadModels();
+</script>
+</body>
+</html>
