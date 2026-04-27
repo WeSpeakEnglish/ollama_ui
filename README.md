@@ -40,7 +40,7 @@ A clean, lightweight, single-file web chat interface for Ollama with full conver
 
 ## Tips
 
-- Pull models first: `ollama pull llama3.2`
+- Pull models first: `ollama pull llama3:latest`
 - Increase **window** for longer conversations
 - Lower **temp** for coding or factual answers
 - Use **Clear** to reset chat and memory
