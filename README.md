@@ -21,12 +21,15 @@ A clean, lightweight, single-file web chat interface for Ollama with full conver
    ```
 
 2. **(Optional) SSH tunnel for remote server:**
+
+ Run it locally if ollama running on remote server (for example in PowerShell) and keep the terminal opened
+   
    ```
    ssh -L 11434:127.0.0.1:11434 user@your-server
    ```
 
-3. Open `ollama-ui.html` in your browser
-4. Click **Connect**, select a model and start chatting.
+4. Open `ollama-ui.html` in your browser
+5. Click **Connect**, select a model and start chatting.
 
 ## Settings
 
